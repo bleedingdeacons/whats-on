@@ -143,7 +143,12 @@ switch ($Command) {
     'composer' {
         $lsite = Get-LocalSite
         Push-Location $Root
-        try { & $lsite.Php -c $lsite.PhpIni -d display_startup_errors=0 $lsite.Composer @Rest } finally { Pop-Location }
+        # PHPRC so the PHP processes Composer starts itself (@php scripts, build.php's
+        # nested composer install) load the same php.ini, and with it ext-zip.
+        $previousPhprc = $env:PHPRC
+        $env:PHPRC = $lsite.PhpIni
+        try { & $lsite.Php -c $lsite.PhpIni -d display_startup_errors=0 $lsite.Composer @Rest }
+        finally { $env:PHPRC = $previousPhprc; Pop-Location }
     }
     'setup' {
         Invoke-Build

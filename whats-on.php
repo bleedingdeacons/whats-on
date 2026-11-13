@@ -30,7 +30,8 @@ if ( defined( 'WHATS_ON_KILL' ) && WHATS_ON_KILL ) {
 	return;
 }
 
-define( 'WHATS_ON_VERSION', '0.1.0' );
+// The Version: header above is the single source of truth; CI's release job raises it on merge.
+define( 'WHATS_ON_VERSION', (string) ( get_file_data( __FILE__, [ 'Version' => 'Version' ] )['Version'] ?? '0.0.0' ) );
 define( 'WHATS_ON_FILE', __FILE__ );
 define( 'WHATS_ON_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WHATS_ON_URL', plugin_dir_url( __FILE__ ) );
