@@ -125,6 +125,11 @@ $whats_on_events = [
 	[ 'Speaker Meeting', 22, '19:30', '21:00', 'meetings', [ 'no_image' => true ] ],
 	[ 'Winter Social', 30, '18:00', '23:00', 'social', [] ],
 	[ 'Last Month\'s Coffee Morning', -30, '10:00', '12:00', 'social', [] ], // Past: must never appear.
+	// Upcoming but not public: none of these may ever appear in a carousel.
+	[ 'Committee Meeting (private)', 3, '18:00', '20:00', 'meetings', [ 'status' => 'private' ] ],
+	[ 'Planning Session (draft)', 4, '18:00', '20:00', 'meetings', [ 'status' => 'draft' ] ],
+	[ 'Members Evening (password)', 6, '19:00', '21:00', 'social', [ 'password' => 'members' ] ],
+	[ 'Set-up Crew (hidden from listings)', 7, '08:00', '10:00', 'workshops', [ 'hidden' => true ] ],
 ];
 
 $whats_on_colours = [ [ 52, 101, 164 ], [ 46, 139, 87 ], [ 199, 107, 41 ], [ 142, 68, 173 ], [ 192, 57, 43 ], [ 22, 160, 133 ], [ 41, 128, 185 ], [ 211, 84, 0 ], [ 127, 140, 141 ] ];
@@ -138,7 +143,7 @@ foreach ( $whats_on_events as $i => [ $title, $offset, $start, $end, $category, 
 	$event_arg = [
 		'title'      => $title,
 		'content'    => 'Sample event created by the What\'s On dev seed.',
-		'status'     => 'publish',
+		'status'     => $extra['status'] ?? 'publish',
 		'start_date' => $start_at,
 		'end_date'   => $end_at,
 		'timezone'   => $whats_on_tz->getName(),
@@ -153,6 +158,14 @@ foreach ( $whats_on_events as $i => [ $title, $offset, $start, $end, $category, 
 		continue;
 	}
 	update_post_meta( $event->ID, WHATS_ON_SAMPLE_META, 1 );
+
+	if ( ! empty( $extra['password'] ) ) {
+		wp_update_post( [ 'ID' => $event->ID, 'post_password' => $extra['password'] ] );
+	}
+	if ( ! empty( $extra['hidden'] ) ) {
+		// The Events Calendar's "Hide From Event Listings" checkbox.
+		update_post_meta( $event->ID, '_EventHideFromUpcoming', 'yes' );
+	}
 
 	if ( empty( $extra['no_image'] ) ) {
 		$image_id = $whats_on_image( $title, $whats_on_colours[ $i % count( $whats_on_colours ) ], $event->ID );

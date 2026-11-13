@@ -28,7 +28,9 @@ Requires **Divi 5** (developed against 5.19.0) and **The Events Calendar** (6.x)
 | Design | Previous / Next Buttons | Arrow colour, background, border, box shadow |
 | Advanced | | The usual Divi options, plus Custom CSS for track, card, image, title, date and buttons |
 
-Only events that have not ended are shown, soonest first. Past events never appear.
+Only **public** events that have not ended are shown, soonest first: published (never drafts,
+pending, scheduled or private events), not password-protected, and not marked "Hide From
+Event Listings" in The Events Calendar. Past events never appear.
 
 Dates follow the **site language's regional format** (Settings → General → Site Language),
 through PHP's `intl` extension: the locale decides the order of day and month, 12- or 24-hour
@@ -107,7 +109,7 @@ Local's bundled WP-CLI and Composer, so nothing else needs installing. Run it wi
 | Command | Does |
 |---|---|
 | `pwsh bin/dev.ps1 info` | Resolved paths and URLs |
-| `pwsh bin/dev.ps1 seed` | 9 sample events (one past, one all-day, one multi-day, one without an image, two featured, three categories) and two demo pages: `/whats-on-demo/` (the module's defaults) and `/whats-on-demo-single/` (one event, centred). Re-running replaces them |
+| `pwsh bin/dev.ps1 seed` | 13 sample events (one past, one all-day, one multi-day, one without an image, two featured, three categories, and four upcoming but not public: private, draft, password-protected and hidden from listings) and two demo pages: `/whats-on-demo/` (the module's defaults) and `/whats-on-demo-single/` (one event, centred). Re-running replaces them |
 | `pwsh bin/dev.ps1 reset` | Removes the sample data only. Everything seeded is tagged `_whats_on_sample` |
 | `pwsh bin/dev.ps1 wp …` | Any WP-CLI command against the site |
 | `pwsh bin/dev.ps1 composer …` | Local's Composer, run in this checkout |
