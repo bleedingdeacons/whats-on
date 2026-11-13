@@ -1,20 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
-         bootstrap="tests/bootstrap.php"
-         colors="true"
-         cacheDirectory=".phpunit.cache">
+<phpunit
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+    bootstrap="tests/bootstrap.php"
+    colors="true"
+    cacheDirectory=".phpunit.cache"
+    displayDetailsOnTestsThatTriggerWarnings="true"
+    failOnRisky="true"
+    failOnWarning="true"
+>
     <testsuites>
-        <testsuite name="unit">
+        <testsuite name="Unit">
             <directory suffix="Test.php">tests/php</directory>
         </testsuite>
     </testsuites>
     <source>
         <include>
-            <directory>src</directory>
+            <directory suffix=".php">src</directory>
         </include>
         <exclude>
+            <!--
+                The Divi module and the WordPress wiring: they call Divi 5's own
+                rendering classes and register hooks, and are exercised on the
+                dev site and in the Visual Builder rather than in unit tests.
+                Excluded from the coverage denominator, as the other suite plugins
+                exclude their admin and integration layers.
+            -->
             <directory>src/Divi</directory>
+            <file>src/Plugin.php</file>
+            <file>src/Assets.php</file>
+            <file>src/Rest/EventsController.php</file>
         </exclude>
     </source>
 </phpunit>
