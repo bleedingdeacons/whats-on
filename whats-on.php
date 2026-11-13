@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Plugin Name:       What's On
  * Description:       Divi 5 module that shows upcoming events from The Events Calendar as a carousel of cards (featured image, title, date and time) with previous / next buttons.
@@ -21,37 +22,37 @@
 
 declare(strict_types=1);
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+if (! defined('ABSPATH')) {
+    exit;
 }
 
 // Kill switch: define( 'WHATS_ON_KILL', true ); in wp-config.php to stand the plugin down without deactivating it.
-if ( defined( 'WHATS_ON_KILL' ) && WHATS_ON_KILL ) {
-	return;
+if (defined('WHATS_ON_KILL') && WHATS_ON_KILL) {
+    return;
 }
 
 // The Version: header above is the single source of truth; CI's release job raises it on merge.
-define( 'WHATS_ON_VERSION', (string) ( get_file_data( __FILE__, [ 'Version' => 'Version' ] )['Version'] ?? '0.0.0' ) );
-define( 'WHATS_ON_FILE', __FILE__ );
-define( 'WHATS_ON_DIR', plugin_dir_path( __FILE__ ) );
-define( 'WHATS_ON_URL', plugin_dir_url( __FILE__ ) );
+define('WHATS_ON_VERSION', (string) ( get_file_data(__FILE__, [ 'Version' => 'Version' ])['Version'] ?? '0.0.0' ));
+define('WHATS_ON_FILE', __FILE__);
+define('WHATS_ON_DIR', plugin_dir_path(__FILE__));
+define('WHATS_ON_URL', plugin_dir_url(__FILE__));
 
 // Composer autoloader when present (dev checkouts), otherwise a minimal PSR-4 loader so a
 // release zip does not need vendor/.
-if ( is_readable( WHATS_ON_DIR . 'vendor/autoload.php' ) ) {
-	require_once WHATS_ON_DIR . 'vendor/autoload.php';
+if (is_readable(WHATS_ON_DIR . 'vendor/autoload.php')) {
+    require_once WHATS_ON_DIR . 'vendor/autoload.php';
 } else {
-	spl_autoload_register(
-		static function ( string $class ): void {
-			if ( ! str_starts_with( $class, 'WhatsOn\\' ) ) {
-				return;
-			}
-			$file = WHATS_ON_DIR . 'src/' . str_replace( '\\', '/', substr( $class, strlen( 'WhatsOn\\' ) ) ) . '.php';
-			if ( is_readable( $file ) ) {
-				require_once $file;
-			}
-		}
-	);
+    spl_autoload_register(
+        static function (string $class): void {
+            if (! str_starts_with($class, 'WhatsOn\\')) {
+                return;
+            }
+            $file = WHATS_ON_DIR . 'src/' . str_replace('\\', '/', substr($class, strlen('WhatsOn\\'))) . '.php';
+            if (is_readable($file)) {
+                require_once $file;
+            }
+        }
+    );
 }
 
 ( new WhatsOn\Plugin() )->boot();

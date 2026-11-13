@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Turns an event's start/end into the one line of text shown on its card.
  *
@@ -16,63 +17,68 @@ declare(strict_types=1);
 namespace WhatsOn\Events;
 
 use DateTimeImmutable;
+use WhatsOn\Support\Attrs;
 
-final class DateFormatter {
+final class DateFormatter
+{
+    public function __construct(
+        private readonly string $dateFormat,
+        private readonly string $timeFormat,
+        private readonly bool $showTime = true,
+    ) {
+    }
 
-	public function __construct(
-		private readonly string $dateFormat,
-		private readonly string $timeFormat,
-		private readonly bool $showTime = true,
-	) {}
+    /**
+     * Use the site's own formats unless the module overrides the date format.
+     */
+    public static function fromSettings(string $dateFormat = '', bool $showTime = true): self
+    {
+        $dateFormat = trim($dateFormat);
 
-	/**
-	 * Use the site's own formats unless the module overrides the date format.
-	 */
-	public static function fromSettings( string $dateFormat = '', bool $showTime = true ): self {
-		$dateFormat = trim( $dateFormat );
+        return new self(
+            '' !== $dateFormat ? $dateFormat : Attrs::string(get_option('date_format', 'j F Y'), 'j F Y'),
+            Attrs::string(get_option('time_format', 'g:i a'), 'g:i a'),
+            $showTime,
+        );
+    }
 
-		return new self(
-			'' !== $dateFormat ? $dateFormat : (string) get_option( 'date_format', 'j F Y' ),
-			(string) get_option( 'time_format', 'g:i a' ),
-			$showTime,
-		);
-	}
+    public function format(EventCard $event): string
+    {
+        $sameDay = $event->start->format('Y-m-d') === $event->end->format('Y-m-d');
 
-	public function format( EventCard $event ): string {
-		$sameDay = $event->start->format( 'Y-m-d' ) === $event->end->format( 'Y-m-d' );
+        $startDate = $this->date($event->start, $this->dateFormat);
+        $endDate   = $this->date($event->end, $this->dateFormat);
 
-		$startDate = $this->date( $event->start, $this->dateFormat );
-		$endDate   = $this->date( $event->end, $this->dateFormat );
+        if ($event->allDay || ! $this->showTime) {
+            if ($sameDay) {
+                return $event->allDay && $this->showTime
+                    /* translators: %s: event date */
+                    ? sprintf(__('%s · All day', 'whats-on'), $startDate)
+                    : $startDate;
+            }
 
-		if ( $event->allDay || ! $this->showTime ) {
-			if ( $sameDay ) {
-				return $event->allDay && $this->showTime
-					/* translators: %s: event date */
-					? sprintf( __( '%s · All day', 'whats-on' ), $startDate )
-					: $startDate;
-			}
+            return $startDate . ' – ' . $endDate;
+        }
 
-			return $startDate . ' – ' . $endDate;
-		}
+        $startTime = $this->date($event->start, $this->timeFormat);
+        $endTime   = $this->date($event->end, $this->timeFormat);
 
-		$startTime = $this->date( $event->start, $this->timeFormat );
-		$endTime   = $this->date( $event->end, $this->timeFormat );
+        if ($sameDay) {
+            if ($startTime === $endTime) {
+                return $startDate . ' · ' . $startTime;
+            }
 
-		if ( $sameDay ) {
-			if ( $startTime === $endTime ) {
-				return $startDate . ' · ' . $startTime;
-			}
+            return $startDate . ' · ' . $startTime . ' – ' . $endTime;
+        }
 
-			return $startDate . ' · ' . $startTime . ' – ' . $endTime;
-		}
+        return $startDate . ' ' . $startTime . ' – ' . $endDate . ' ' . $endTime;
+    }
 
-		return $startDate . ' ' . $startTime . ' – ' . $endDate . ' ' . $endTime;
-	}
-
-	/**
-	 * Localised formatting in the event's own timezone.
-	 */
-	private function date( DateTimeImmutable $when, string $format ): string {
-		return (string) wp_date( $format, $when->getTimestamp(), $when->getTimezone() );
-	}
+    /**
+     * Localised formatting in the event's own timezone.
+     */
+    private function date(DateTimeImmutable $when, string $format): string
+    {
+        return (string) wp_date($format, $when->getTimestamp(), $when->getTimezone());
+    }
 }
