@@ -47,13 +47,22 @@ it('renders one linked card per event with image, title and date', function (): 
 });
 
 it('renders previous and next buttons unless turned off', function (): void {
-    $events = [ whatsOnCard(1, 'A') ];
+    $events = [ whatsOnCard(1, 'A'), whatsOnCard(2, 'B') ];
 
     expect($this->renderer->render($events, new CarouselOptions()))
         ->toContain('data-whats-on-prev')
         ->toContain('data-whats-on-next')
+        ->not->toContain('whats-on--single')
         ->and($this->renderer->render($events, new CarouselOptions(showArrows: false)))
         ->not->toContain('data-whats-on-prev');
+});
+
+it('centres a single event and leaves out the buttons', function (): void {
+    $html = $this->renderer->render([ whatsOnCard(1, 'Only one') ], new CarouselOptions());
+
+    expect($html)->toContain('<div class="whats-on whats-on--single" data-whats-on')
+        ->not->toContain('data-whats-on-prev')
+        ->not->toContain('data-whats-on-next');
 });
 
 it('carries loop and per-view settings to the front end', function (): void {

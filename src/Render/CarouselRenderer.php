@@ -38,10 +38,12 @@ final class CarouselRenderer
             $slides .= $this->slide($event, $options, $index, count($events));
         }
 
-        $nav = $options->showArrows ? $this->nav() : '';
+        // A single event is centred, and there is nothing to step through, so no buttons.
+        $single = 1 === count($events);
+        $nav    = $options->showArrows && ! $single ? $this->nav() : '';
 
         return sprintf(
-            '<div class="whats-on" data-whats-on data-loop="%1$s" style="%2$s" role="region" aria-roledescription="%3$s" aria-label="%4$s">'
+            '<div class="%7$s" data-whats-on data-loop="%1$s" style="%2$s" role="region" aria-roledescription="%3$s" aria-label="%4$s">'
                 . '<div class="whats-on__viewport"><ul class="whats-on__track" role="list" tabindex="0">%5$s</ul></div>%6$s'
             . '</div>',
             $options->loop ? 'on' : 'off',
@@ -49,7 +51,8 @@ final class CarouselRenderer
             esc_attr__('carousel', 'whats-on'),
             esc_attr__("What's On", 'whats-on'),
             $slides,
-            $nav
+            $nav,
+            $single ? 'whats-on whats-on--single' : 'whats-on'
         );
     }
 

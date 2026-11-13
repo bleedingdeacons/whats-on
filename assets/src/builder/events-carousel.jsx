@@ -121,6 +121,9 @@ const Notice = ( { children } ) => (
 const Carousel = ( { events, options } ) => {
 	const rootRef = useRef( null );
 	const Heading = options.headingLevel;
+	// Mirrors CarouselRenderer: a single event is centred, with no buttons.
+	const single = events.length === 1;
+	const showArrows = options.showArrows && ! single;
 
 	// Re-attach the shared carousel behaviour whenever the rendered cards change.
 	useEffect( () => {
@@ -129,12 +132,12 @@ const Carousel = ( { events, options } ) => {
 		}
 		const carousel = new WhatsOnCarousel( rootRef.current );
 		return () => carousel.destroy();
-	}, [ events, options.loop, options.showArrows ] );
+	}, [ events, options.loop, showArrows ] );
 
 	return (
 		<div
 			ref={ rootRef }
-			className="whats-on"
+			className={ single ? 'whats-on whats-on--single' : 'whats-on' }
 			data-whats-on=""
 			data-loop={ options.loop ? 'on' : 'off' }
 			style={ options.style }
@@ -179,7 +182,7 @@ const Carousel = ( { events, options } ) => {
 					) ) }
 				</ul>
 			</div>
-			{ options.showArrows && (
+			{ showArrows && (
 				<>
 					<button type="button" className="whats-on__nav whats-on__nav--prev" data-whats-on-prev="" aria-label="Previous events">
 						<Chevron />
