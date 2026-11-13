@@ -27,7 +27,7 @@ class EventRepository
     }
 
     /**
-     * Events that have not yet ended, soonest first.
+     * Public events that have not yet ended, soonest first.
      *
      * @return list<EventCard>
      */
@@ -41,7 +41,7 @@ class EventRepository
 
         $cards = [];
         foreach (is_array($posts) ? $posts : [] as $post) {
-            $card = $post instanceof WP_Post ? $this->toCard($post) : null;
+            $card = $post instanceof WP_Post && self::isPublic($post) ? $this->toCard($post) : null;
             if (null !== $card) {
                 $cards[] = $card;
             }
@@ -51,18 +51,41 @@ class EventRepository
     }
 
     /**
+     * Whether anyone may see this event: published, not password-protected, and
+     * not marked "Hide From Event Listings" in The Events Calendar.
+     *
+     * The query already asks for exactly this. It is checked again on what comes
+     * back so that a whats_on/query_args filter, or a calendar version that
+     * ignores an argument, can never put a private event in a public carousel.
+     */
+    public static function isPublic(WP_Post $post): bool
+    {
+        if ('publish' !== $post->post_status || '' !== $post->post_password) {
+            return false;
+        }
+
+        $hidden = strtolower(Attrs::string(get_post_meta($post->ID, '_EventHideFromUpcoming', true)));
+
+        return ! in_array($hidden, [ 'yes', '1', 'true', 'on' ], true);
+    }
+
+    /**
      * Arguments for tribe_get_events(); public so the mapping is testable.
      *
      * @return array<string, mixed>
      */
     public function queryArgs(QueryOptions $options): array
     {
+        // Public events only: published (not draft, pending, scheduled or
+        // private), without a password, and not hidden from event listings.
         $args = [
-            'post_status'    => 'publish',
-            'posts_per_page' => $options->count,
-            'ends_after'     => 'now',
-            'orderby'        => 'event_date',
-            'order'          => 'ASC',
+            'post_status'          => 'publish',
+            'has_password'         => false,
+            'hidden_from_upcoming' => false,
+            'posts_per_page'       => $options->count,
+            'ends_after'           => 'now',
+            'orderby'              => 'event_date',
+            'order'                => 'ASC',
         ];
 
         if ($options->featuredOnly) {

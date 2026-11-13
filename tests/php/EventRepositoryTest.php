@@ -14,26 +14,33 @@ covers(EventRepository::class);
  * Seed an event the way The Events Calendar stores one: a post plus its meta.
  *
  * @param array<string, string> $meta
+ * @param array<string, mixed>  $post Extra post fields (post_status, post_password).
  */
-function whatsOnSeedEvent(int $id, string $title, array $meta): WP_Post
+function whatsOnSeedEvent(int $id, string $title, array $meta, array $post = []): WP_Post
 {
-    $post = WpState::addPost($id, [ 'post_title' => $title, 'post_type' => EventRepository::POST_TYPE ]);
+    $post = WpState::addPost($id, $post + [ 'post_title' => $title, 'post_type' => EventRepository::POST_TYPE, 'post_password' => '' ]);
     foreach ($meta as $key => $value) {
         update_post_meta($id, $key, $value);
     }
 
-    return new WP_Post($post);
+    // wp-mocks' WP_Post declares no $post_password, which real WordPress always
+    // has; declare it here rather than create it as a dynamic property.
+    return new class ($post) extends WP_Post {
+        public string $post_password = '';
+    };
 }
 
 describe('queryArgs', function (): void {
-    it('asks for published events that have not ended, soonest first', function (): void {
+    it('asks for public events that have not ended, soonest first', function (): void {
         expect(( new EventRepository() )->queryArgs(new QueryOptions(5)))->toBe(
             [
-                'post_status'    => 'publish',
-                'posts_per_page' => 5,
-                'ends_after'     => 'now',
-                'orderby'        => 'event_date',
-                'order'          => 'ASC',
+                'post_status'          => 'publish',
+                'has_password'         => false,
+                'hidden_from_upcoming' => false,
+                'posts_per_page'       => 5,
+                'ends_after'           => 'now',
+                'orderby'              => 'event_date',
+                'order'                => 'ASC',
             ]
         );
     });
@@ -121,6 +128,24 @@ describe('toCard', function (): void {
     });
 });
 
+describe('isPublic', function (): void {
+    it('accepts a published event with no password that is not hidden', function (): void {
+        expect(EventRepository::isPublic(whatsOnSeedEvent(10, 'Open', [])))->toBeTrue();
+    });
+
+    it('rejects anything that is not published', function (string $status): void {
+        expect(EventRepository::isPublic(whatsOnSeedEvent(11, 'Not public', [], [ 'post_status' => $status ])))->toBeFalse();
+    })->with([ 'draft', 'pending', 'future', 'private', 'trash' ]);
+
+    it('rejects a password-protected event', function (): void {
+        expect(EventRepository::isPublic(whatsOnSeedEvent(12, 'Members only', [], [ 'post_password' => 'secret' ])))->toBeFalse();
+    });
+
+    it('rejects an event hidden from event listings', function (): void {
+        expect(EventRepository::isPublic(whatsOnSeedEvent(13, 'Hidden', [ '_EventHideFromUpcoming' => 'yes' ])))->toBeFalse();
+    });
+});
+
 describe('upcoming', function (): void {
     it('maps what The Events Calendar returns and drops anything that is not an event post', function (): void {
         $event = whatsOnSeedEvent(5, 'Open Meeting', [ '_EventStartDate' => '2026-11-15 19:30:00' ]);
@@ -131,6 +156,19 @@ describe('upcoming', function (): void {
 
         expect($cards)->toHaveCount(1)
             ->and($cards[0]->title)->toBe('Open Meeting');
+    });
+
+    it('never shows a non-public event, even if the query returns one', function (): void {
+        $public  = whatsOnSeedEvent(20, 'Open Meeting', [ '_EventStartDate' => '2026-11-15 19:30:00' ]);
+        $private = whatsOnSeedEvent(21, 'Committee', [ '_EventStartDate' => '2026-11-16 19:30:00' ], [ 'post_status' => 'private' ]);
+        $draft   = whatsOnSeedEvent(22, 'Draft', [ '_EventStartDate' => '2026-11-17 19:30:00' ], [ 'post_status' => 'draft' ]);
+        $locked  = whatsOnSeedEvent(23, 'Locked', [ '_EventStartDate' => '2026-11-18 19:30:00' ], [ 'post_password' => 'x' ]);
+        $hidden  = whatsOnSeedEvent(24, 'Hidden', [ '_EventStartDate' => '2026-11-19 19:30:00', '_EventHideFromUpcoming' => 'yes' ]);
+        Functions\expect('tribe_get_events')->once()->andReturn([ $public, $private, $draft, $locked, $hidden ]);
+
+        $titles = array_map(static fn ($card) => $card->title, ( new EventRepository() )->upcoming(new QueryOptions(9)));
+
+        expect($titles)->toBe([ 'Open Meeting' ]);
     });
 
     it('passes the query args to The Events Calendar', function (): void {
