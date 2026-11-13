@@ -176,6 +176,11 @@
 	display: none;
 }
 
+/* A single event: the card keeps its per-view width and sits in the middle. */
+.whats-on.whats-on--single .whats-on__track {
+	justify-content: center;
+}
+
 .whats-on--empty .whats-on__empty {
 	margin: 0;
 	padding: 0;

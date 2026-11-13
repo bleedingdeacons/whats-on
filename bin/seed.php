@@ -164,42 +164,66 @@ foreach ( $whats_on_events as $i => [ $title, $offset, $start, $end, $category, 
 	WP_CLI::log( sprintf( '  %-32s %s → %s%s', $title, $start_at, $end_at, $all_day ? ' (all day)' : '' ) );
 }
 
-// Demo page: one full-width row holding the module with its defaults.
+// Demo pages: one full-width row holding the module.
 $whats_on_version = defined( 'ET_BUILDER_PRODUCT_VERSION' ) ? ET_BUILDER_PRODUCT_VERSION : '5.0.0';
-$whats_on_content = str_replace(
-	'__V__',
-	$whats_on_version,
-	'<!-- wp:divi/placeholder -->'
-	. '<!-- wp:divi/section {"builderVersion":"__V__"} -->'
-	. '<!-- wp:divi/row {"module":{"advanced":{"columnStructure":{"desktop":{"value":"4_4"}},"flexColumnStructure":{"desktop":{"value":"equal-columns_1"}}},"decoration":{"layout":{"desktop":{"value":{"flexWrap":"nowrap"}}}}},"builderVersion":"__V__"} -->'
-	. '<!-- wp:divi/column {"module":{"advanced":{"type":{"desktop":{"value":"4_4"}}},"decoration":{"sizing":{"desktop":{"value":{"flexType":"24_24"}}}}},"builderVersion":"__V__"} -->'
-	. '<!-- wp:whats-on/events-carousel {"builderVersion":"__V__"} --><!-- /wp:whats-on/events-carousel -->'
-	. '<!-- /wp:divi/column -->'
-	. '<!-- /wp:divi/row -->'
-	. '<!-- /wp:divi/section -->'
-	. '<!-- /wp:divi/placeholder -->'
-);
 
-$whats_on_page = wp_insert_post(
-	[
-		'post_type'    => 'page',
-		'post_status'  => 'publish',
-		'post_title'   => "What's On",
-		'post_name'    => 'whats-on-demo',
-		'post_content' => wp_slash( $whats_on_content ),
-		'meta_input'   => [
-			WHATS_ON_SAMPLE_META     => 1,
-			'_et_pb_use_builder'     => 'on',
-			'_et_pb_page_layout'     => 'et_full_width_page',
-			'_et_pb_side_nav'        => 'off',
-			'_et_pb_post_hide_nav'   => 'default',
+/**
+ * Create a published Divi 5 page holding one What's On module.
+ *
+ * @param array<string, mixed> $module_attrs Block attributes for the module (builderVersion is added).
+ */
+$whats_on_demo_page = static function ( string $title, string $slug, array $module_attrs ) use ( $whats_on_version ): int {
+	$module_attrs['builderVersion'] = $whats_on_version;
+
+	$content = str_replace(
+		'__V__',
+		$whats_on_version,
+		'<!-- wp:divi/placeholder -->'
+		. '<!-- wp:divi/section {"builderVersion":"__V__"} -->'
+		. '<!-- wp:divi/row {"module":{"advanced":{"columnStructure":{"desktop":{"value":"4_4"}},"flexColumnStructure":{"desktop":{"value":"equal-columns_1"}}},"decoration":{"layout":{"desktop":{"value":{"flexWrap":"nowrap"}}}}},"builderVersion":"__V__"} -->'
+		. '<!-- wp:divi/column {"module":{"advanced":{"type":{"desktop":{"value":"4_4"}}},"decoration":{"sizing":{"desktop":{"value":{"flexType":"24_24"}}}}},"builderVersion":"__V__"} -->'
+		. '<!-- wp:whats-on/events-carousel ' . wp_json_encode( $module_attrs ) . ' --><!-- /wp:whats-on/events-carousel -->'
+		. '<!-- /wp:divi/column -->'
+		. '<!-- /wp:divi/row -->'
+		. '<!-- /wp:divi/section -->'
+		. '<!-- /wp:divi/placeholder -->'
+	);
+
+	$page = wp_insert_post(
+		[
+			'post_type'    => 'page',
+			'post_status'  => 'publish',
+			'post_title'   => $title,
+			'post_name'    => $slug,
+			'post_content' => wp_slash( $content ),
+			'meta_input'   => [
+				WHATS_ON_SAMPLE_META     => 1,
+				'_et_pb_use_builder'     => 'on',
+				'_et_pb_page_layout'     => 'et_full_width_page',
+				'_et_pb_side_nav'        => 'off',
+				'_et_pb_post_hide_nav'   => 'default',
+			],
 		],
-	],
-	true
+		true
+	);
+
+	if ( is_wp_error( $page ) ) {
+		WP_CLI::error( $page->get_error_message() );
+	}
+
+	return (int) $page;
+};
+
+// The module with its defaults: a carousel of every upcoming sample event.
+$whats_on_page = $whats_on_demo_page( "What's On", 'whats-on-demo', [] );
+
+// Limited to one event, to show a lone card centred with no buttons.
+$whats_on_single = $whats_on_demo_page(
+	"What's On (one event)",
+	'whats-on-demo-single',
+	[ 'events' => [ 'advanced' => [ 'count' => [ 'desktop' => [ 'value' => '1' ] ] ] ] ]
 );
 
-if ( is_wp_error( $whats_on_page ) ) {
-	WP_CLI::error( $whats_on_page->get_error_message() );
-}
-
-WP_CLI::success( 'Sample events created. Demo page: ' . get_permalink( $whats_on_page ) );
+WP_CLI::success(
+	'Sample events created. Demo pages: ' . get_permalink( $whats_on_page ) . ' and ' . get_permalink( $whats_on_single )
+);

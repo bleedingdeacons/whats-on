@@ -20,7 +20,7 @@ Requires **Divi 5** (developed against 5.19.0) and **The Events Calendar** (6.x)
 
 | Panel | Group | Setting |
 |---|---|---|
-| Content | Events | Number of events, event category slugs (comma-separated), featured only, date format (blank = site format), show time, "no events" text |
+| Content | Events | Number of events, event category slugs (comma-separated), featured only, date format (blank = the site language's regional format), show time, "no events" text |
 | Content | Carousel | Events per view (desktop / tablet / phone), loop, show previous / next buttons |
 | Design | Event Card | Background, border, box shadow |
 | Design | Image | Border, filters |
@@ -30,11 +30,19 @@ Requires **Divi 5** (developed against 5.19.0) and **The Events Calendar** (6.x)
 
 Only events that have not ended are shown, soonest first. Past events never appear.
 
-Date line formats:
+Dates follow the **site language's regional format** (Settings → General → Site Language),
+through PHP's `intl` extension: the locale decides the order of day and month, 12- or 24-hour
+time and the punctuation. For English (UK):
 
-- Same day: `Fri 20 Nov 2026 · 7:00 pm – 9:30 pm`
-- All day: `Fri 20 Nov 2026 · All day`
-- Multi-day: `Sat 21 Nov 2026 7:00 pm – Mon 23 Nov 2026 4:00 pm`
+- Same day: `Fri, 20 Nov 2026, 19:00–21:30`
+- All day: `Fri, 20 Nov 2026, all day`
+- Multi-day: `Sat, 21 Nov 2026, 19:00 – Mon, 23 Nov 2026, 16:00`
+
+and for English (US) `Fri, Nov 20, 2026, 7:00 PM–9:30 PM`. A module's own Date Format field
+(a PHP date format) overrides this, and a server without `intl` falls back to the Date and
+Time Formats in Settings → General.
+
+A carousel with only one event shows that card centred, with no previous / next buttons.
 
 Filters: `whats_on/query_args` (arguments passed to `tribe_get_events()`) and
 `whats_on/image_size` (default `large`). Kill switch: `define( 'WHATS_ON_KILL', true );`
@@ -99,7 +107,7 @@ Local's bundled WP-CLI and Composer, so nothing else needs installing. Run it wi
 | Command | Does |
 |---|---|
 | `pwsh bin/dev.ps1 info` | Resolved paths and URLs |
-| `pwsh bin/dev.ps1 seed` | 9 sample events (one past, one all-day, one multi-day, one without an image, two featured, three categories) and a demo page at `/whats-on-demo/`. Re-running replaces them |
+| `pwsh bin/dev.ps1 seed` | 9 sample events (one past, one all-day, one multi-day, one without an image, two featured, three categories) and two demo pages: `/whats-on-demo/` (the module's defaults) and `/whats-on-demo-single/` (one event, centred). Re-running replaces them |
 | `pwsh bin/dev.ps1 reset` | Removes the sample data only. Everything seeded is tagged `_whats_on_sample` |
 | `pwsh bin/dev.ps1 wp …` | Any WP-CLI command against the site |
 | `pwsh bin/dev.ps1 composer …` | Local's Composer, run in this checkout |

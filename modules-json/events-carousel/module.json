@@ -105,7 +105,7 @@
               "groupSlug": "contentEvents",
               "attrName": "events.advanced.dateFormat",
               "label": "Date Format",
-              "description": "PHP date format for the event date, e.g. D j M Y. Leave blank to use the site's date format.",
+              "description": "Leave blank to show dates in the site language's regional format. To override it, enter a PHP date format, e.g. D j M Y.",
               "priority": 40,
               "render": true,
               "features": { "hover": false, "sticky": false, "responsive": false, "preset": "content" },

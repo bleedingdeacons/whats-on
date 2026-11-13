@@ -25,5 +25,8 @@ pest()
                     ->setTimezone($timezone ?? wp_timezone())
                     ->format($format)
         );
+
+        // Not among wp-mocks' stubs. WordPress's own default; tests that care set their own.
+        Functions\when('get_locale')->justReturn('en_US');
     })
     ->in('php');
