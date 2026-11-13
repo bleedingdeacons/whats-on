@@ -3,7 +3,7 @@
 /**
  * Plugin Name:       What's On
  * Description:       Divi 5 module that shows upcoming events from The Events Calendar as a carousel of cards (featured image, title, date and time) with previous / next buttons.
- * Version:           1.1.0
+ * Version:           1.2.0
  * Requires at least: 6.5
  * Requires PHP:      8.1
  * Requires Plugins:  the-events-calendar
