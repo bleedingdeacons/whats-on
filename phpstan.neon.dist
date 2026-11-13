@@ -1,0 +1,32 @@
+# Committed PHPStan config.
+#
+# phpstan.neon (no .dist) is gitignored and, if present, overrides this file
+# entirely: keep personal tweaks there. This .dist is what CI uses.
+
+includes:
+    - vendor/szepeviktor/phpstan-wordpress/extension.neon
+
+parameters:
+    level: 9
+    # As in the rest of the suite: in WordPress plugin code PHPDoc is
+    # aspirational (values arrive from post meta, block attributes and REST
+    # requests), so PHPDoc informs types but does not prove conditions dead.
+    # Native types are still checked normally.
+    treatPhpDocTypesAsCertain: false
+    # Analyse across the range CI runs (8.4 floor, 8.5 ceiling), so a
+    # developer's PHP and CI's agree.
+    phpVersion:
+        min: 80400
+        max: 80500
+    reportUnmatchedIgnoredErrors: false
+    paths:
+        - src
+        - whats-on.php
+    excludePaths:
+        - tests
+    # Divi 5 and The Events Calendar are not installed in CI and publish no
+    # stubs; tests/phpstan/stubs.php declares the parts this plugin calls.
+    scanFiles:
+        - tests/phpstan/stubs.php
+    bootstrapFiles:
+        - tests/phpstan/bootstrap.php

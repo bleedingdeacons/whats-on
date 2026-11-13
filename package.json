@@ -1,6 +1,5 @@
 {
   "name": "whats-on",
-  "version": "0.1.0",
   "private": true,
   "description": "Divi 5 module: carousel of upcoming events from The Events Calendar.",
   "license": "GPL-2.0-or-later",
@@ -11,7 +10,6 @@
     "watch": "node build.mjs --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "package": "node build.mjs && node bin/package.mjs",
     "dev:setup": "pwsh -NoProfile -File bin/dev.ps1 setup",
     "dev:seed": "pwsh -NoProfile -File bin/dev.ps1 seed"
   },

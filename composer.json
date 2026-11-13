@@ -1,14 +1,24 @@
 {
-    "name": "sandman/whats-on",
+    "name": "bleedingdeacons/whats-on",
     "description": "Divi 5 module: carousel of upcoming events from The Events Calendar.",
     "type": "wordpress-plugin",
     "license": "GPL-2.0-or-later",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/bleedingdeacons/wp-mocks"
+        }
+    ],
     "require": {
         "php": ">=8.1"
     },
     "require-dev": {
-        "brain/monkey": "^2.6",
-        "pestphp/pest": "^3.0"
+        "bleedingdeacons/wp-mocks": "^3.0",
+        "pestphp/pest": "^5.2",
+        "phpstan/phpstan": "^2.0",
+        "phpunit/phpunit": "^13.0",
+        "squizlabs/php_codesniffer": "^4.0",
+        "szepeviktor/phpstan-wordpress": "^2.0"
     },
     "autoload": {
         "psr-4": {
@@ -21,6 +31,13 @@
         }
     },
     "scripts": {
+        "build": "@php build.php build:production",
+        "build:production": "@php build.php build:production",
+        "build:dev": "@php build.php build:dev",
+        "build:clean": "@php build.php clean",
+        "phpcs": "phpcs --standard=.phpcs.xml.dist",
+        "phpcs:fix": "phpcbf --standard=.phpcs.xml.dist",
+        "phpstan": "phpstan analyse --memory-limit=1G",
         "test": "pest"
     },
     "config": {

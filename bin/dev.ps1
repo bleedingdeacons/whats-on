@@ -143,7 +143,17 @@ switch ($Command) {
     'composer' {
         $lsite = Get-LocalSite
         Push-Location $Root
-        try { & $lsite.Php -c $lsite.PhpIni -d display_startup_errors=0 $lsite.Composer @Rest } finally { Pop-Location }
+        # Every PHP that Composer starts (@php scripts, vendor/bin tools such as
+        # phpcs and phpstan, build.php's nested composer install) must be this same
+        # PHP with this same php.ini, which is what provides ext-zip. vendor/bin
+        # proxies run the first `php` on PATH, so Local's PHP goes first, and PHPRC
+        # points every one of them at the site's php.ini.
+        $previousPhprc = $env:PHPRC
+        $previousPath = $env:PATH
+        $env:PHPRC = $lsite.PhpIni
+        $env:PATH = (Split-Path -Parent $lsite.Php) + [IO.Path]::PathSeparator + $env:PATH
+        try { & $lsite.Php -c $lsite.PhpIni -d display_startup_errors=0 $lsite.Composer @Rest }
+        finally { $env:PHPRC = $previousPhprc; $env:PATH = $previousPath; Pop-Location }
     }
     'setup' {
         Invoke-Build

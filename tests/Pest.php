@@ -2,23 +2,28 @@
 
 declare(strict_types=1);
 
-use Brain\Monkey;
+// Pest configuration.
+//
+// Every test under tests/php runs on wp-mocks' TestCase, which runs Brain
+// Monkey's setUp/tearDown and resets WpState between tests. A test placed
+// anywhere else runs on plain PHPUnit and has to be named here if it touches
+// WordPress.
+
+use BleedingDeacons\WpMocks\TestCase;
 use Brain\Monkey\Functions;
 
-uses()
-	->beforeEach( function (): void {
-		Monkey\setUp();
-		Functions\stubEscapeFunctions();
-		Functions\stubTranslationFunctions();
-		Functions\when( 'wp_timezone' )->alias( static fn () => new DateTimeZone( 'Europe/London' ) );
-		// wp_date() is a localised date(); for tests, plain DateTime formatting in the given zone.
-		Functions\when( 'wp_date' )->alias(
-			static fn ( string $format, int $ts, ?DateTimeZone $tz = null ) => ( new DateTimeImmutable( '@' . $ts ) )
-				->setTimezone( $tz ?? new DateTimeZone( 'UTC' ) )
-				->format( $format )
-		);
-	} )
-	->afterEach( function (): void {
-		Monkey\tearDown();
-	} )
-	->in( 'php' );
+pest()
+    ->extend(TestCase::class)
+    ->beforeEach(function (): void {
+        // wp-mocks' wp_date() formats with date(), in PHP's default zone, and
+        // ignores its $timezone argument. Event dates are formatted in the
+        // event's own zone, so that argument is the behaviour under test:
+        // honour it, as WordPress does.
+        Functions\when('wp_date')->alias(
+            static fn (string $format, ?int $timestamp = null, ?DateTimeZone $timezone = null): string =>
+                (new DateTimeImmutable('@' . ($timestamp ?? time())))
+                    ->setTimezone($timezone ?? wp_timezone())
+                    ->format($format)
+        );
+    })
+    ->in('php');

@@ -1,5 +1,14 @@
 # What's On
 
+[![CI](https://github.com/bleedingdeacons/whats-on/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/bleedingdeacons/whats-on/actions/workflows/ci.yml)
+[![Semgrep](https://github.com/bleedingdeacons/whats-on/actions/workflows/semgrep.yml/badge.svg?branch=main)](https://github.com/bleedingdeacons/whats-on/actions/workflows/semgrep.yml)
+[![Coverage Status](https://coveralls.io/repos/github/bleedingdeacons/whats-on/badge.svg?branch=main)](https://coveralls.io/github/bleedingdeacons/whats-on?branch=main)
+![PHPStan](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbleedingdeacons%2Fwhats-on%2Fmain%2Fphpstan.neon.dist&query=%24.parameters.level&label=PHPStan&prefix=level%20&color=brightgreen)
+![PHPCS](https://img.shields.io/badge/dynamic/xml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbleedingdeacons%2Fwhats-on%2Fmain%2F.phpcs.xml.dist&query=%2Fruleset%2Frule%5B1%5D%2F%40ref&label=PHPCS&color=brightgreen)
+![Version](https://img.shields.io/badge/version-0.1.0-blue)
+![PHP](https://img.shields.io/badge/php-8.1%2B-777bb4)
+![Licence](https://img.shields.io/badge/licence-GPL--2.0--or--later-green)
+
 A Divi 5 module that shows upcoming events from **The Events Calendar** as a carousel.
 Each card shows the event's featured image, title, and date and time, and the whole card
 links to the event. Previous / next buttons move the carousel one event at a time. It also
@@ -43,13 +52,16 @@ src/                             PHP (namespace WhatsOn\)
   Events/                        query options, TEC repository, date formatting
   Render/                        carousel markup (no Divi/WP dependency, unit-tested)
   Rest/EventsController.php      GET /wp-json/whats-on/v1/events (builder preview data)
+  Support/Attrs.php              typed reads from Divi attributes, meta and options
 assets/src/frontend/             carousel behaviour + CSS (shared with the builder)
 assets/src/builder/              Visual Builder module (React edit renderer)
 assets/build/                    compiled output (committed so the plugin runs without a build)
-tests/php/                       Pest + Brain Monkey
+tests/php/                       Pest over wp-mocks (the suite's shared WordPress doubles)
 tests/js/                        Vitest + jsdom
+tests/phpstan/                   PHPStan stubs for the parts of Divi 5 and TEC the plugin calls
 bin/dev.ps1                      Local site helper (link, seed, WP-CLI, Composer)
 bin/seed.php                     sample events + demo page
+build.php                        the suite's build script: npm assets, then the release zip
 ```
 
 How the Divi 5 parts fit together:
@@ -99,25 +111,36 @@ Day to day:
 npm run watch
 ```
 
-```bash
-npm test
-```
-
-```bash
-pwsh bin/dev.ps1 composer test
-```
-
-The first time, install the PHP test dependencies with `pwsh bin/dev.ps1 composer install`.
+The first time, install the PHP dependencies with `pwsh bin/dev.ps1 composer install`.
 
 - Front end: http://aa-bristol-future.local/whats-on-demo/
 - Builder: http://aa-bristol-future.local/whats-on-demo/?et_fb=1
 
+## Quality gates
+
+CI runs all of these on every PR, on PHP 8.4 and 8.5. Run them locally through
+`bin/dev.ps1`, so Composer and every tool it starts use Local's PHP:
+
+| Command | Gate |
+|---|---|
+| `pwsh bin/dev.ps1 composer test` | Pest, over [wp-mocks](https://github.com/bleedingdeacons/wp-mocks) |
+| `npm test` | Vitest (carousel behaviour, builder attribute parsing) |
+| `pwsh bin/dev.ps1 composer phpstan` | PHPStan level 9 with the WordPress extension, no baseline |
+| `pwsh bin/dev.ps1 composer phpcs` | PSR-12 (`composer phpcs:fix` applies the automatic fixes) |
+| `pwsh bin/dev.ps1 composer build:production` | Builds the release zip; CI also checks `assets/build` is current |
+
+CI also runs `composer validate`, `composer audit`, `npm audit`, a PHP lint and
+Semgrep, and uploads coverage to Coveralls (advisory).
+
 ## Release
 
-```bash
-npm run package
-```
+**Merging to `main` is the release**, as for every suite plugin. After the gates pass, CI:
 
-This makes a production build and writes `dist/whats-on-production-<version>.zip` (the name `/deploy` resolves). The version comes
-from the `Version:` header in `whats-on.php`. Keep `readme.txt`'s `Stable tag` and
-`WHATS_ON_VERSION` in step with it.
+1. derives the level from the commit prefixes since the last `v*` tag (`feat!` → major, `feat:` → minor, anything else → patch);
+2. writes the new version into the `whats-on.php` header;
+3. runs `composer build:production`, which builds the assets, syncs the version into
+   `readme.txt` and the README badge, and writes `build/whats-on-production-<version>.zip`;
+4. commits that as `chore(release): vX.Y.Z [skip ci]` and publishes a GitHub Release with the zip.
+
+`/deploy test whats-on` then installs it. To release without a merge, run the CI
+workflow manually (`workflow_dispatch`).
