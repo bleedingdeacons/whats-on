@@ -1,5 +1,5 @@
 /**
- * Builds a release zip: dist/whats-on-<version>.zip containing only what WordPress needs.
+ * Builds a release zip: dist/whats-on-production-<version>.zip (the name /deploy looks for) containing only what WordPress needs.
  * Run with `npm run package` (does a production asset build first).
  */
 import { execFileSync } from 'node:child_process';
@@ -26,7 +26,7 @@ for ( const path of SHIP ) {
 	}
 }
 
-const zip = join( root, 'dist', `whats-on-${ version }.zip` );
+const zip = join( root, 'dist', `whats-on-production-${ version }.zip` );
 // bsdtar writes zip (Windows' built-in tar, macOS tar). Git Bash puts GNU tar first on PATH, which can't.
 if ( process.platform === 'win32' ) {
 	const tar = join( process.env.SystemRoot || 'C:\\Windows', 'System32', 'tar.exe' );

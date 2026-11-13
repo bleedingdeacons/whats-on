@@ -118,6 +118,6 @@ The first time, install the PHP test dependencies with `pwsh bin/dev.ps1 compose
 npm run package
 ```
 
-This makes a production build and writes `dist/whats-on-<version>.zip`. The version comes
+This makes a production build and writes `dist/whats-on-production-<version>.zip` (the name `/deploy` resolves). The version comes
 from the `Version:` header in `whats-on.php`. Keep `readme.txt`'s `Stable tag` and
 `WHATS_ON_VERSION` in step with it.
