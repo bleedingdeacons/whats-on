@@ -6,7 +6,7 @@
 ![PHPStan](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbleedingdeacons%2Fwhats-on%2Fmain%2Fphpstan.neon.dist&query=%24.parameters.level&label=PHPStan&prefix=level%20&color=brightgreen)
 ![PHPCS](https://img.shields.io/badge/dynamic/xml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbleedingdeacons%2Fwhats-on%2Fmain%2F.phpcs.xml.dist&query=%2Fruleset%2Frule%5B1%5D%2F%40ref&label=PHPCS&color=brightgreen)
 ![Version](https://img.shields.io/badge/version-1.2.0-blue)
-![PHP](https://img.shields.io/badge/php-8.1%2B-777bb4)
+![PHP](https://img.shields.io/badge/php-8.4%2B-777bb4)
 ![Licence](https://img.shields.io/badge/licence-GPL--2.0--or--later-green)
 
 A Divi 5 module that shows upcoming events from **The Events Calendar** as a carousel.
@@ -14,7 +14,7 @@ Each card shows the event's featured image, title, and date and time, and the wh
 links to the event. Previous / next buttons move the carousel one event at a time. It also
 scrolls by swipe or trackpad, and with the arrow keys when it has focus.
 
-Requires **Divi 5** (developed against 5.19.0) and **The Events Calendar** (6.x). PHP 8.1+.
+Requires **Divi 5** (developed against 5.19.0) and **The Events Calendar** (6.x). PHP 8.4+.
 
 ## Module settings
 
