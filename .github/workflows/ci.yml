@@ -5,13 +5,12 @@ name: CI
 # npm: Node is set up wherever build.php runs (it runs `npm run build` before
 # zipping), and the Vitest suite is a gate alongside Pest.
 #
-# GitHub runs this on merges to main, as the release run, and on Dependabot's
-# pull requests, which nobody checks locally. Every other pull request runs no
-# checks here: its gates run locally first, in the wp-plugin-ci container
+# GitHub runs the gates (`ci`) on Dependabot's pull requests only, which nobody
+# checks locally, and the release on merges to main. Every other pull request's
+# gates run locally, in the wp-plugin-ci container
 # (C:\Data\dev\wp-dev-tools\ci\ci-local.ps1), which reads this file's `ci` job
-# and runs the same steps. They still run here before every release, which
-# needs them, so a merge that was never checked locally still cannot publish a
-# broken zip; it just finds out at merge time instead.
+# and runs the same steps. The release does not re-run them: a merge is only as
+# checked as its local run, so run ci-local before merging.
 
 on:
   push:
@@ -41,9 +40,9 @@ concurrency:
 jobs:
   ci:
     name: PHP ${{ matrix.php }}
-    # On a pull request, only Dependabot's: everyone else's gates run locally
-    # (ci-local.ps1) before the merge, and again here on main.
-    if: github.event_name != 'pull_request' || github.event.pull_request.user.login == 'dependabot[bot]'
+    # Dependabot's pull requests only. Everyone else's gates run locally
+    # (ci-local.ps1) before the merge, and main runs only the release.
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
 
     # 8.4 is the suite's floor and 8.5 the current release, so both are gated.
@@ -105,7 +104,9 @@ jobs:
       - name: Semgrep
         # Once only: Semgrep scans source, which does not vary by PHP version.
         # Gated on critical/high severity, since outside a PR `semgrep ci` never
-        # marks a finding blocking; that gates the release.
+        # marks a finding blocking. Dependabot runs get no secrets, so here it
+        # skips; it runs locally with ci-local -Semgrep, and weekly over main
+        # in semgrep.yml.
         # Skips outright without SEMGREP_APP_TOKEN rather than scanning with a
         # quietly smaller ruleset and reporting green.
         if: matrix.php == '8.4'
@@ -273,12 +274,12 @@ jobs:
   # ---------------------------------------------------------------------------
   # Release
   # ---------------------------------------------------------------------------
-  # The merge is the release: gates pass, CI raises the version, builds the
-  # archive from merged code and publishes it as a GitHub Release. /deploy
-  # pulls the asset from there.
+  # The merge is the release: CI raises the version, builds the archive from
+  # merged code and publishes it as a GitHub Release. /deploy pulls the asset
+  # from there. It does not wait on the gates, which ran locally before the
+  # merge (ci-local.ps1).
   release:
     name: Release
-    needs: ci
     if: >-
       github.ref == 'refs/heads/main' &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
