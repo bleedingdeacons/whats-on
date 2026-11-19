@@ -121,9 +121,10 @@ const Notice = ( { children } ) => (
 const Carousel = ( { events, options } ) => {
 	const rootRef = useRef( null );
 	const Heading = options.headingLevel;
-	// Mirrors CarouselRenderer: a single event is centred, with no buttons.
+	// Mirrors CarouselRenderer: a single event has no buttons and no auto scroll.
 	const single = events.length === 1;
 	const showArrows = options.showArrows && ! single;
+	const autoplay = single ? 0 : options.autoplayInterval;
 
 	// Re-attach the shared carousel behaviour whenever the rendered cards change.
 	useEffect( () => {
@@ -132,7 +133,7 @@ const Carousel = ( { events, options } ) => {
 		}
 		const carousel = new WhatsOnCarousel( rootRef.current );
 		return () => carousel.destroy();
-	}, [ events, options.loop, showArrows ] );
+	}, [ events, options.loop, showArrows, autoplay ] );
 
 	return (
 		<div
@@ -140,7 +141,7 @@ const Carousel = ( { events, options } ) => {
 			className={ single ? 'whats-on whats-on--single' : 'whats-on' }
 			data-whats-on=""
 			data-loop={ options.loop ? 'on' : 'off' }
-			style={ options.style }
+			data-autoplay={ autoplay }
 			role="region"
 			aria-roledescription="carousel"
 			aria-label="What's On"
@@ -184,10 +185,10 @@ const Carousel = ( { events, options } ) => {
 			</div>
 			{ showArrows && (
 				<>
-					<button type="button" className="whats-on__nav whats-on__nav--prev" data-whats-on-prev="" aria-label="Previous events">
+					<button type="button" className="whats-on__nav whats-on__nav--prev" data-whats-on-prev="" aria-label="Previous event">
 						<Chevron />
 					</button>
-					<button type="button" className="whats-on__nav whats-on__nav--next" data-whats-on-next="" aria-label="Next events">
+					<button type="button" className="whats-on__nav whats-on__nav--next" data-whats-on-next="" aria-label="Next event">
 						<Chevron />
 					</button>
 				</>

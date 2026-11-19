@@ -154,7 +154,7 @@ class EventRepository
             src: (string) $src[0],
             alt: $alt,
             srcset: is_string($srcset) ? $srcset : '',
-            sizes: '(max-width: 767px) 100vw, (max-width: 980px) 50vw, 33vw',
+            sizes: '(max-width: 767px) 100vw, 50vw',
             width: (int) ( $src[1] ?? 0 ),
             height: (int) ( $src[2] ?? 0 ),
         );

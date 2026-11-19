@@ -9,10 +9,13 @@
 ![PHP](https://img.shields.io/badge/php-8.4%2B-777bb4)
 ![Licence](https://img.shields.io/badge/licence-GPL--2.0--or--later-green)
 
-A Divi 5 module that shows upcoming events from **The Events Calendar** as a carousel.
-Each card shows the event's featured image, title, and date and time, and the whole card
-links to the event. Previous / next buttons move the carousel one event at a time. It also
-scrolls by swipe or trackpad, and with the arrow keys when it has focus.
+A Divi 5 module that shows upcoming events from **The Events Calendar** as a carousel,
+one event at a time: the featured image on the left, and on the right the title with the
+date and time under it. The whole card links to the event; on a phone the image stacks
+above the text. The carousel moves to the next event every 5 seconds by default, wrapping
+from the last back to the first, and pauses while a visitor hovers over or focuses it, or
+the tab is hidden. Previous / next buttons move it one event at a time, as do swipe,
+trackpad and the arrow keys when it has focus.
 
 Requires **Divi 5** (developed against 5.19.0) and **The Events Calendar** (6.x). PHP 8.4+.
 
@@ -21,7 +24,7 @@ Requires **Divi 5** (developed against 5.19.0) and **The Events Calendar** (6.x)
 | Panel | Group | Setting |
 |---|---|---|
 | Content | Events | Number of events, event category slugs (comma-separated), featured only, date format (blank = the site language's regional format), show time, "no events" text |
-| Content | Carousel | Events per view (desktop / tablet / phone), loop, show previous / next buttons |
+| Content | Carousel | Loop, auto scroll (on by default), auto scroll interval in seconds (default 5), show previous / next buttons |
 | Design | Event Card | Background, border, box shadow |
 | Design | Image | Border, filters |
 | Design | Title Text / Date Text | Full Divi font controls (title heading level defaults to H3) |
@@ -44,7 +47,8 @@ and for English (US) `Fri, Nov 20, 2026, 7:00 PM–9:30 PM`. A module's own Date
 (a PHP date format) overrides this, and a server without `intl` falls back to the Date and
 Time Formats in Settings → General.
 
-A carousel with only one event shows that card centred, with no previous / next buttons.
+A carousel with only one event shows that event with no previous / next buttons and no
+auto scroll.
 
 Filters: `whats_on/query_args` (arguments passed to `tribe_get_events()`) and
 `whats_on/image_size` (default `large`). Kill switch: `define( 'WHATS_ON_KILL', true );`

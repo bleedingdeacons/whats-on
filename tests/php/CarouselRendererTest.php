@@ -57,19 +57,24 @@ it('renders previous and next buttons unless turned off', function (): void {
         ->not->toContain('data-whats-on-prev');
 });
 
-it('centres a single event and leaves out the buttons', function (): void {
+it('leaves out the buttons and auto scroll for a single event', function (): void {
     $html = $this->renderer->render([ whatsOnCard(1, 'Only one') ], new CarouselOptions());
 
     expect($html)->toContain('<div class="whats-on whats-on--single" data-whats-on')
+        ->toContain('data-autoplay="0"')
         ->not->toContain('data-whats-on-prev')
         ->not->toContain('data-whats-on-next');
 });
 
-it('carries loop and per-view settings to the front end', function (): void {
-    $html = $this->renderer->render([ whatsOnCard(1, 'A') ], new CarouselOptions(loop: true, perViewDesktop: 4, perViewTablet: 2, perViewPhone: 1));
+it('carries loop and auto scroll settings to the front end', function (): void {
+    $events = [ whatsOnCard(1, 'A'), whatsOnCard(2, 'B') ];
 
-    expect($html)->toContain('data-loop="on"')
-        ->toContain('style="--whats-on-per-view:4;--whats-on-per-view-tablet:2;--whats-on-per-view-phone:1"');
+    expect($this->renderer->render($events, new CarouselOptions()))
+        ->toContain('data-loop="off" data-autoplay="5000"')
+        ->and($this->renderer->render($events, new CarouselOptions(loop: true, autoplaySeconds: 8)))
+        ->toContain('data-loop="on" data-autoplay="8000"')
+        ->and($this->renderer->render($events, new CarouselOptions(autoplay: false)))
+        ->toContain('data-autoplay="0"');
 });
 
 it('escapes event titles', function (): void {
@@ -98,8 +103,9 @@ it('parses carousel options from module attributes', function (): void {
             'title'    => [ 'decoration' => [ 'font' => [ 'font' => [ 'desktop' => [ 'value' => [ 'headingLevel' => 'script' ] ] ] ] ] ],
             'carousel' => [
                 'advanced' => [
-                    'slidesPerView' => [ 'desktop' => [ 'value' => '5' ], 'phone' => [ 'value' => '9' ] ],
                     'loop'          => [ 'desktop' => [ 'value' => 'on' ] ],
+                    'autoplay'      => [ 'desktop' => [ 'value' => 'off' ] ],
+                    'autoplaySpeed' => [ 'desktop' => [ 'value' => '90' ] ],
                 ],
             ],
             'arrows'   => [ 'advanced' => [ 'show' => [ 'desktop' => [ 'value' => 'off' ] ] ] ],
@@ -109,7 +115,14 @@ it('parses carousel options from module attributes', function (): void {
     expect($options->headingLevel)->toBe('h3')
         ->and($options->loop)->toBeTrue()
         ->and($options->showArrows)->toBeFalse()
-        ->and($options->perViewDesktop)->toBe(5)
-        ->and($options->perViewTablet)->toBe(2)
-        ->and($options->perViewPhone)->toBe(6);
+        ->and($options->autoplay)->toBeFalse()
+        ->and($options->autoplaySeconds)->toBe(60)
+        ->and($options->autoplayInterval())->toBe(0);
+});
+
+it('defaults to auto scrolling every five seconds', function (): void {
+    $options = CarouselOptions::fromAttrs([]);
+
+    expect($options->autoplay)->toBeTrue()
+        ->and($options->autoplayInterval())->toBe(5000);
 });

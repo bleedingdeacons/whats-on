@@ -30,11 +30,9 @@ export const toInt = ( value, fallback, min, max ) => {
 
 export function builderOptions( attrs = {} ) {
 	const events = attrs?.events?.advanced ?? {};
-	const perView = attrs?.carousel?.advanced?.slidesPerView ?? {};
-
-	const perViewDesktop = toInt( perView?.desktop?.value, 3, 1, 6 );
-	const perViewTablet = toInt( perView?.tablet?.value, Math.min( perViewDesktop, 2 ), 1, 6 );
-	const perViewPhone = toInt( perView?.phone?.value, 1, 1, 6 );
+	const carousel = attrs?.carousel?.advanced ?? {};
+	const autoplay = isOn( desktop( carousel.autoplay ), true );
+	const autoplaySeconds = toInt( desktop( carousel.autoplaySpeed ), 5, 1, 60 );
 
 	const heading = String(
 		attrs?.title?.decoration?.font?.font?.desktop?.value?.headingLevel ?? 'h3'
@@ -47,14 +45,13 @@ export function builderOptions( attrs = {} ) {
 		dateFormat: String( desktop( events.dateFormat ) ?? '' ),
 		showTime: isOn( desktop( events.showTime ), true ),
 		noEventsText: String( desktop( events.noEventsText ) ?? '' ).trim(),
-		loop: isOn( desktop( attrs?.carousel?.advanced?.loop ) ),
+		loop: isOn( desktop( carousel.loop ) ),
+		autoplay,
+		autoplaySeconds,
+		// Milliseconds between automatic steps; 0 turns auto scroll off.
+		autoplayInterval: autoplay ? autoplaySeconds * 1000 : 0,
 		showArrows: isOn( desktop( attrs?.arrows?.advanced?.show ), true ),
 		headingLevel: HEADING_LEVELS.includes( heading ) ? heading : 'h3',
-		style: {
-			'--whats-on-per-view': perViewDesktop,
-			'--whats-on-per-view-tablet': perViewTablet,
-			'--whats-on-per-view-phone': perViewPhone,
-		},
 	};
 }
 
