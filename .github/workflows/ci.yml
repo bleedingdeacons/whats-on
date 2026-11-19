@@ -4,12 +4,17 @@ name: CI
 # two additions for a plugin whose builder and front-end assets are compiled by
 # npm: Node is set up wherever build.php runs (it runs `npm run build` before
 # zipping), and the Vitest suite is a gate alongside Pest.
+#
+# GitHub runs this on merges to main only, as the release run. Pull requests
+# run no checks here: the gates run locally first, in the wp-plugin-ci
+# container (C:\Data\dev\wp-dev-tools\ci\ci-local.ps1), which reads this file's
+# `ci` job and runs the same steps. They still run here before every release,
+# which needs them, so a merge that was never checked locally still cannot
+# publish a broken zip; it just finds out at merge time instead.
 
 on:
   push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
   # A merge is the release, so without this there is no way to cut one when the
   # merge's own run does not survive (the 2026-08-06 Actions outage left a run
   # queued with no runner, refusing cancel and rerun). A merge cannot be
@@ -17,12 +22,13 @@ on:
   workflow_dispatch:
 
 concurrency:
-  # PR runs share one group per ref, so pushing again cancels the superseded
-  # run. Runs on main get a group of their own (run_id is unique) and therefore
-  # queue behind nothing: a run that never starts must not block every run after
-  # it. Releases still serialise, on the release job's own group.
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'pull_request' && 'pr' || github.run_id }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  # Every run gets a group of its own (run_id is unique) and therefore queues
+  # behind nothing — a run that never *starts* must not be able to block every
+  # run after it, which is what a single shared group allowed. Nothing is
+  # cancelled: each run is a release. Releases still serialise, on the release
+  # job's own group; the gates never needed to.
+  group: ${{ github.workflow }}-${{ github.run_id }}
+  cancel-in-progress: false
 
 jobs:
   ci:
@@ -87,7 +93,8 @@ jobs:
 
       - name: Semgrep
         # Once only: Semgrep scans source, which does not vary by PHP version.
-        # Diff-aware on a PR; a full scan on main, which gates the release.
+        # Gated on critical/high severity, since outside a PR `semgrep ci` never
+        # marks a finding blocking; that gates the release.
         # Skips outright without SEMGREP_APP_TOKEN rather than scanning with a
         # quietly smaller ruleset and reporting green.
         if: matrix.php == '8.4'
@@ -100,7 +107,49 @@ jobs:
             exit 0
           fi
           python3 -m pip install --quiet semgrep==1.174.0
-          semgrep ci
+
+          # No --dry-run: this uploads, so the platform's view of main stays
+          # current and triage done in the UI keeps applying here. `|| true`
+          # because the exit code reflects blocking findings, which a scan
+          # outside a PR never has; the check below is the gate.
+          semgrep ci --json > "$RUNNER_TEMP/semgrep-results.json" || true
+
+          python3 - <<'PY'
+          import json, os, sys
+
+          path = os.path.join(os.environ['RUNNER_TEMP'], 'semgrep-results.json')
+          try:
+              with open(path, encoding='utf-8') as fh:
+                  data = json.load(fh)
+          except (OSError, ValueError) as exc:
+              # No readable results means the scan itself failed; that is not
+              # a pass.
+              sys.exit(f'Semgrep produced no readable results: {exc}')
+
+          results = data.get('results', [])
+
+          # Semgrep emits two severity vocabularies side by side - the older
+          # ERROR/WARNING/INFO and the newer CRITICAL/HIGH/MEDIUM/LOW - and a
+          # single scan can return both, so both spellings are listed here.
+          SERIOUS = {'ERROR', 'CRITICAL', 'HIGH'}
+
+          counts = {}
+          for r in results:
+              sev = (r.get('extra') or {}).get('severity', 'UNKNOWN').upper()
+              counts[sev] = counts.get(sev, 0) + 1
+          print('findings by severity:', counts or '(none)')
+
+          serious = [r for r in results
+                     if (r.get('extra') or {}).get('severity', '').upper() in SERIOUS]
+          for r in serious:
+              line = (r.get('start') or {}).get('line', '?')
+              print(f"  {r.get('check_id')}  {r.get('path')}:{line}")
+
+          if serious:
+              sys.exit(f'{len(serious)} critical/high finding(s). '
+                       'Triage in Semgrep or fix in code.')
+          print('No critical or high findings.')
+          PY
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress
@@ -128,7 +177,8 @@ jobs:
 
       - name: Build production archive
         # Once only: the result is identical on both legs. The release job
-        # ships this exact command's output, so a broken build must fail the PR.
+        # ships this exact command's output, so a broken build must fail before
+        # it gets there.
         if: matrix.php == '8.4'
         run: composer build:production
 
