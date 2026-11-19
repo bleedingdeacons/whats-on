@@ -2,8 +2,8 @@
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.4
-Stable tag: 1.2.0
-Build date: 2026/11/13 17:47:18
+Stable tag: 1.2.1
+Build date: 2026/11/19 15:48:32
 License: GPLv2 or later
 
 A Divi 5 module that shows upcoming events from The Events Calendar as a carousel.
