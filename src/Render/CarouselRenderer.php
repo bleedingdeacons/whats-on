@@ -38,16 +38,16 @@ final class CarouselRenderer
             $slides .= $this->slide($event, $options, $index, count($events));
         }
 
-        // A single event is centred, and there is nothing to step through, so no buttons.
+        // A single event has nothing to step through: no buttons and no auto scroll.
         $single = 1 === count($events);
         $nav    = $options->showArrows && ! $single ? $this->nav() : '';
 
         return sprintf(
-            '<div class="%7$s" data-whats-on data-loop="%1$s" style="%2$s" role="region" aria-roledescription="%3$s" aria-label="%4$s">'
+            '<div class="%7$s" data-whats-on data-loop="%1$s" data-autoplay="%2$d" role="region" aria-roledescription="%3$s" aria-label="%4$s">'
                 . '<div class="whats-on__viewport"><ul class="whats-on__track" role="list" tabindex="0">%5$s</ul></div>%6$s'
             . '</div>',
             $options->loop ? 'on' : 'off',
-            esc_attr($options->styleAttribute()),
+            $single ? 0 : $options->autoplayInterval(),
             esc_attr__('carousel', 'whats-on'),
             esc_attr__("What's On", 'whats-on'),
             $slides,
@@ -111,8 +111,8 @@ final class CarouselRenderer
         return sprintf(
             '<button type="button" class="whats-on__nav whats-on__nav--prev" data-whats-on-prev aria-label="%1$s">%3$s</button>'
             . '<button type="button" class="whats-on__nav whats-on__nav--next" data-whats-on-next aria-label="%2$s">%3$s</button>',
-            esc_attr__('Previous events', 'whats-on'),
-            esc_attr__('Next events', 'whats-on'),
+            esc_attr__('Previous event', 'whats-on'),
+            esc_attr__('Next event', 'whats-on'),
             $chevron
         );
     }

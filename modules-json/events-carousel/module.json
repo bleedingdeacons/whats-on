@@ -3,7 +3,7 @@
   "d4Shortcode": "",
   "title": "What's On",
   "titles": "What's On",
-  "description": "A carousel of upcoming events from The Events Calendar.",
+  "description": "A carousel of upcoming events from The Events Calendar, one event at a time.",
   "keywords": ["events", "event carousel", "the events calendar", "upcoming events", "whats on"],
   "moduleIcon": "divi/module-group-carousel",
   "category": "module",
@@ -145,29 +145,13 @@
       "type": "object",
       "default": {
         "advanced": {
-          "slidesPerView": { "desktop": { "value": "3" }, "tablet": { "value": "2" }, "phone": { "value": "1" } },
-          "loop": { "desktop": { "value": "off" } }
+          "loop": { "desktop": { "value": "off" } },
+          "autoplay": { "desktop": { "value": "on" } },
+          "autoplaySpeed": { "desktop": { "value": "5" } }
         }
       },
       "settings": {
         "advanced": {
-          "slidesPerView": {
-            "groupType": "group-item",
-            "item": {
-              "groupSlug": "contentCarousel",
-              "attrName": "carousel.advanced.slidesPerView",
-              "label": "Events Per View",
-              "description": "How many event cards are visible at once. Set different values for tablet and phone.",
-              "priority": 10,
-              "render": true,
-              "features": { "hover": false, "sticky": false, "preset": ["style"] },
-              "component": {
-                "type": "field",
-                "name": "divi/range",
-                "props": { "min": 1, "max": 6, "minLimit": 1, "maxLimit": 6, "step": 1, "allowedUnits": [], "defaultUnit": "" }
-              }
-            }
-          },
           "loop": {
             "groupType": "group-item",
             "item": {
@@ -179,6 +163,36 @@
               "render": true,
               "features": { "hover": false, "sticky": false, "responsive": false, "preset": "content" },
               "component": { "type": "field", "name": "divi/toggle" }
+            }
+          },
+          "autoplay": {
+            "groupType": "group-item",
+            "item": {
+              "groupSlug": "contentCarousel",
+              "attrName": "carousel.advanced.autoplay",
+              "label": "Auto Scroll",
+              "description": "Move to the next event automatically. Pauses while a visitor hovers over or focuses the carousel.",
+              "priority": 24,
+              "render": true,
+              "features": { "hover": false, "sticky": false, "responsive": false, "preset": "content" },
+              "component": { "type": "field", "name": "divi/toggle" }
+            }
+          },
+          "autoplaySpeed": {
+            "groupType": "group-item",
+            "item": {
+              "groupSlug": "contentCarousel",
+              "attrName": "carousel.advanced.autoplaySpeed",
+              "label": "Auto Scroll Interval (seconds)",
+              "description": "How long each event is shown before moving to the next.",
+              "priority": 26,
+              "render": true,
+              "features": { "hover": false, "sticky": false, "responsive": false, "preset": "content" },
+              "component": {
+                "type": "field",
+                "name": "divi/range",
+                "props": { "min": 1, "max": 30, "minLimit": 1, "maxLimit": 60, "step": 1, "allowedUnits": [], "defaultUnit": "" }
+              }
             }
           }
         }

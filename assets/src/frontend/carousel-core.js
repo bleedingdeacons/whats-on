@@ -3,7 +3,10 @@
  *
  * The track is a horizontally scrolling list with CSS scroll-snap, so it also works by
  * touch/trackpad swipe and without JavaScript. This adds the previous / next buttons
- * (one card per click), keyboard arrows, and loop-around.
+ * (one card per click), keyboard arrows, loop-around, and auto scroll.
+ *
+ * Auto scroll (`data-autoplay` = milliseconds, 0 = off) always wraps from the last event
+ * to the first, and pauses while the carousel is hovered or focused, or the tab is hidden.
  */
 
 /**
@@ -69,19 +72,32 @@ export class WhatsOnCarousel {
 		this.prev = root.querySelector( '[data-whats-on-prev]' );
 		this.next = root.querySelector( '[data-whats-on-next]' );
 		this.frame = 0;
+		this.timer = 0;
+		this.pausedBy = new Set();
 
-		this.onPrev = () => this.go( -1 );
-		this.onNext = () => this.go( 1 );
+		// A visitor's own step restarts the countdown, so the next card gets its full time.
+		this.onPrev = () => this.step( -1 );
+		this.onNext = () => this.step( 1 );
 		this.onScroll = () => this.schedule();
 		this.onKey = ( event ) => {
 			if ( event.key === 'ArrowLeft' ) {
 				event.preventDefault();
-				this.go( -1 );
+				this.step( -1 );
 			} else if ( event.key === 'ArrowRight' ) {
 				event.preventDefault();
-				this.go( 1 );
+				this.step( 1 );
 			}
 		};
+		this.onEnter = () => this.pause( 'hover' );
+		this.onLeave = () => this.resume( 'hover' );
+		this.onFocusIn = () => this.pause( 'focus' );
+		this.onFocusOut = ( event ) => {
+			if ( ! this.root.contains( event.relatedTarget ) ) {
+				this.resume( 'focus' );
+			}
+		};
+		this.onVisibility = () =>
+			document.hidden ? this.pause( 'hidden' ) : this.resume( 'hidden' );
 
 		if ( ! this.track ) {
 			return;
@@ -91,6 +107,11 @@ export class WhatsOnCarousel {
 		this.next?.addEventListener( 'click', this.onNext );
 		this.track.addEventListener( 'scroll', this.onScroll, { passive: true } );
 		this.track.addEventListener( 'keydown', this.onKey );
+		root.addEventListener( 'mouseenter', this.onEnter );
+		root.addEventListener( 'mouseleave', this.onLeave );
+		root.addEventListener( 'focusin', this.onFocusIn );
+		root.addEventListener( 'focusout', this.onFocusOut );
+		document.addEventListener( 'visibilitychange', this.onVisibility );
 
 		if ( typeof ResizeObserver !== 'undefined' ) {
 			this.resizeObserver = new ResizeObserver( () => this.schedule() );
@@ -99,14 +120,57 @@ export class WhatsOnCarousel {
 
 		root.whatsOnCarousel = this;
 		this.update();
+		this.start();
 	}
 
 	get loop() {
 		return this.root.dataset.loop === 'on';
 	}
 
+	/** Milliseconds between automatic steps; 0 when auto scroll is off. */
+	get interval() {
+		const ms = parseInt( this.root.dataset.autoplay ?? '0', 10 );
+		return Number.isFinite( ms ) && ms > 0 ? ms : 0;
+	}
+
+	/** (Re)start the auto scroll countdown, unless it is off or paused. */
+	start() {
+		this.stop();
+		if ( ! this.track || ! this.interval || this.pausedBy.size > 0 ) {
+			return;
+		}
+		this.timer = setInterval( () => {
+			if ( this.maxScroll() > 2 ) {
+				this.go( 1, true );
+			}
+		}, this.interval );
+	}
+
+	stop() {
+		if ( this.timer ) {
+			clearInterval( this.timer );
+			this.timer = 0;
+		}
+	}
+
+	pause( reason ) {
+		this.pausedBy.add( reason );
+		this.stop();
+	}
+
+	resume( reason ) {
+		this.pausedBy.delete( reason );
+		this.start();
+	}
+
+	/** A step the visitor asked for. */
+	step( direction ) {
+		this.go( direction );
+		this.start();
+	}
+
 	/** Width of one card including the gap between cards. */
-	step() {
+	stepWidth() {
 		const slides = this.track.children;
 		if ( slides.length === 0 ) {
 			return 0;
@@ -124,13 +188,17 @@ export class WhatsOnCarousel {
 		return Math.max( 0, this.track.scrollWidth - this.track.clientWidth );
 	}
 
-	go( direction ) {
+	/**
+	 * @param {1|-1}    direction
+	 * @param {boolean} wrap Wrap at the ends even when Loop is off (auto scroll does).
+	 */
+	go( direction, wrap = false ) {
 		const left = targetScroll( {
 			scrollLeft: this.track.scrollLeft,
 			maxScroll: this.maxScroll(),
-			step: this.step(),
+			step: this.stepWidth(),
 			direction,
-			loop: this.loop,
+			loop: this.loop || wrap,
 		} );
 
 		const reduceMotion =
@@ -173,6 +241,12 @@ export class WhatsOnCarousel {
 	}
 
 	destroy() {
+		this.stop();
+		this.root.removeEventListener( 'mouseenter', this.onEnter );
+		this.root.removeEventListener( 'mouseleave', this.onLeave );
+		this.root.removeEventListener( 'focusin', this.onFocusIn );
+		this.root.removeEventListener( 'focusout', this.onFocusOut );
+		document.removeEventListener( 'visibilitychange', this.onVisibility );
 		this.prev?.removeEventListener( 'click', this.onPrev );
 		this.next?.removeEventListener( 'click', this.onNext );
 		this.track?.removeEventListener( 'scroll', this.onScroll );

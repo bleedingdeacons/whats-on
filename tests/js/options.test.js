@@ -12,11 +12,9 @@ describe( 'builderOptions', () => {
 			loop: false,
 			showArrows: true,
 			headingLevel: 'h3',
-		} );
-		expect( options.style ).toEqual( {
-			'--whats-on-per-view': 3,
-			'--whats-on-per-view-tablet': 2,
-			'--whats-on-per-view-phone': 1,
+			autoplay: true,
+			autoplaySeconds: 5,
+			autoplayInterval: 5000,
 		} );
 	} );
 
@@ -32,8 +30,8 @@ describe( 'builderOptions', () => {
 			},
 			carousel: {
 				advanced: {
-					slidesPerView: { desktop: { value: '4' }, phone: { value: '2' } },
 					loop: { desktop: { value: 'on' } },
+					autoplaySpeed: { desktop: { value: '8' } },
 				},
 			},
 			arrows: { advanced: { show: { desktop: { value: 'off' } } } },
@@ -48,10 +46,17 @@ describe( 'builderOptions', () => {
 			loop: true,
 			showArrows: false,
 			headingLevel: 'h2',
+			autoplaySeconds: 8,
+			autoplayInterval: 8000,
 		} );
-		expect( options.style[ '--whats-on-per-view' ] ).toBe( 4 );
-		expect( options.style[ '--whats-on-per-view-tablet' ] ).toBe( 2 );
-		expect( options.style[ '--whats-on-per-view-phone' ] ).toBe( 2 );
+	} );
+
+	it( 'turns auto scroll off and clamps its interval', () => {
+		const off = builderOptions( { carousel: { advanced: { autoplay: { desktop: { value: 'off' } } } } } );
+		expect( off.autoplayInterval ).toBe( 0 );
+
+		const slow = builderOptions( { carousel: { advanced: { autoplaySpeed: { desktop: { value: '600' } } } } } );
+		expect( slow.autoplayInterval ).toBe( 60000 );
 	} );
 
 	it( 'never renders an arbitrary tag as the heading', () => {

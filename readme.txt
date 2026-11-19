@@ -10,8 +10,10 @@ A Divi 5 module that shows upcoming events from The Events Calendar as a carouse
 
 == Description ==
 
-Adds a "What's On" module to the Divi 5 Visual Builder. Each card shows the event's
-featured image, title, and date and time, and links to the event. Previous / next buttons
-move the carousel one event at a time; it also scrolls by swipe and keyboard.
+Adds a "What's On" module to the Divi 5 Visual Builder. It shows one event at a time:
+the featured image on the left, and the title with the date and time under it on the right,
+all linking to the event. It moves to the next event every 5 seconds (adjustable, or off),
+pausing while a visitor hovers over or focuses it. Previous / next buttons, swipe and the
+keyboard also move it one event at a time.
 
 Requires the Divi 5 theme and The Events Calendar.
